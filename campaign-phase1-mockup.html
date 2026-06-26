@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キャンペーン管理 | 広告管理画面</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif; font-size: 13px; background: #f5f5f5; color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ── ヘッダー ── */
+  .header { background: #1a1a2e; color: #fff; height: 48px; display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; }
+  .header .logo { font-size: 18px; font-weight: bold; color: #fff; letter-spacing: 1px; }
+  .header .logo span { color: #e8c84a; }
+  .header .notice { font-size: 12px; color: #aaa; margin-left: 8px; display: flex; align-items: center; gap: 4px; }
+  .header .shortcut-hint { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .header .kbd-hint { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #ccc; cursor: pointer; transition: background 0.15s; }
+  .header .kbd-hint:hover { background: rgba(255,255,255,0.2); }
+  .header .user { font-size: 12px; color: #ccc; display: flex; align-items: center; gap: 6px; }
+  .header .user svg { opacity: 0.7; }
+
+  /* ── レイアウト ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── サイドバー ── */
+  .sidebar { width: 180px; background: #1e2336; color: #ccc; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.2s; }
+  .sidebar.collapsed { width: 48px; }
+  .sidebar-toggle { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: flex-end; color: #666; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .sidebar-toggle:hover { color: #fff; }
+  .sidebar-section { padding: 16px 12px 4px; font-size: 10px; color: #555; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; color: #aaa; transition: all 0.15s; white-space: nowrap; text-decoration: none; border-left: 3px solid transparent; }
+  .sidebar-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .sidebar-item.active { background: rgba(220,53,69,0.2); color: #fff; border-left-color: #dc3545; }
+  .sidebar-item svg { flex-shrink: 0; width: 16px; height: 16px; }
+  .sidebar-item .label { font-size: 12px; overflow: hidden; transition: opacity 0.2s; }
+  .sidebar.collapsed .label { opacity: 0; width: 0; }
+  .sidebar.collapsed .sidebar-section { opacity: 0; }
+
+  /* ── メインコンテンツ ── */
+  .main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .page-title { font-size: 20px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+  .page-title .flag { color: #dc3545; }
+  .page-actions { display: flex; gap: 8px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 5px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: #dc3545; color: #fff; }
+  .btn-primary:hover { background: #c82333; }
+  .btn-secondary { background: #fff; color: #444; border: 1px solid #ddd; }
+  .btn-secondary:hover { background: #f8f8f8; border-color: #bbb; }
+  .btn-ghost { background: transparent; color: #666; border: 1px solid transparent; }
+  .btn-ghost:hover { background: #f0f0f0; border-color: #ddd; }
+
+  /* ── 検索バー ── */
+  .search-bar-wrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  .search-icon { color: #999; flex-shrink: 0; }
+  .search-input { border: none; outline: none; flex: 1; font-size: 13px; color: #333; }
+  .search-input::placeholder { color: #bbb; }
+  .search-meta { display: flex; gap: 6px; align-items: center; }
+  .filter-tag { background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #666; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .filter-tag:hover { background: #e8e8e8; }
+  .search-hint { font-size: 11px; color: #bbb; margin-left: auto; }
+
+  /* ── タブ ── */
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #e8e8e8; margin-bottom: 14px; }
+  .tab { padding: 8px 18px; cursor: pointer; font-size: 13px; color: #888; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+  .tab:hover { color: #555; }
+  .tab.active { color: #dc3545; border-bottom-color: #dc3545; font-weight: 500; }
+
+  /* ── テーブルツールバー ── */
+  .table-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .table-toolbar select { border: 1px solid #ddd; border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #555; background: #fff; cursor: pointer; }
+  .result-count { font-size: 12px; color: #888; margin-left: auto; }
+  .inline-filter { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 4px 10px; }
+  .inline-filter input { border: none; outline: none; font-size: 12px; width: 160px; color: #333; }
+  .inline-filter input::placeholder { color: #bbb; }
+
+  /* ── テーブル ── */
+  .table-wrap { background: #fff; border-radius: 8px; border: 1px solid #e8e8e8; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #f7f8fa; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e8e8e8; white-space: nowrap; cursor: pointer; user-select: none; }
+  thead th:hover { background: #f0f1f4; }
+  thead th .sort-icon { margin-left: 4px; color: #bbb; }
+  tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.1s; position: relative; cursor: pointer; }
+  tbody tr:hover { background: #fafbff; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 10px 12px; vertical-align: middle; }
+  td.id-col { color: #999; font-size: 12px; width: 60px; }
+  td.name-col { max-width: 320px; }
+  .campaign-name { font-weight: 500; color: #1a1a2e; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+  .campaign-sub { font-size: 11px; color: #aaa; margin-top: 2px; display: flex; gap: 8px; align-items: center; }
+  .tag { background: #f0f0f0; border-radius: 3px; padding: 1px 6px; font-size: 10px; color: #777; }
+  .tag.ns { background: #fff3cd; color: #856404; }
+
+  /* ── 進捗バー ── */
+  td.progress-col { width: 170px; cursor: default; }
+  .progress-wrap { }
+  .progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .progress-pct { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+  .progress-imp-today { font-size: 10px; color: #888; }
+  .progress-bar-bg { background: #eee; border-radius: 4px; height: 5px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-bar-fill.ok       { background: #28a745; }
+  .progress-bar-fill.warn     { background: #ffc107; }
+  .progress-bar-fill.over     { background: #dc3545; }
+  .progress-bar-fill.inactive { background: #bbb; }
+  .progress-hint { font-size: 10px; color: #bbb; margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+
+  /* ── CTR ── */
+  td.ctr-col { width: 90px; text-align: right; cursor: default; }
+  .ctr-value { font-size: 14px; font-weight: 600; color: #333; }
+  .ctr-hint { font-size: 10px; color: #bbb; margin-top: 3px; display: flex; align-items: center; gap: 3px; justify-content: flex-end; }
+
+  /* ── ホバートゥールチップ（フローティング） ── */
+  #kpi-tooltip { position: fixed; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 14px; font-size: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); z-index: 500; pointer-events: none; min-width: 200px; display: none; }
+  .tt-header { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600; }
+  .tt-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #f5f5f5; }
+  .tt-row:last-child { border-bottom: none; }
+  .tt-label { color: #888; font-size: 11px; }
+  .tt-val { font-weight: 600; color: #1a1a2e; font-size: 12px; }
+  .tt-val.highlight { color: #28a745; }
+  .tt-val.warning { color: #dc3545; }
+  .tt-divider { border: none; border-top: 1px solid #eee; margin: 6px 0; }
+  .tt-bar-bg { background: #eee; border-radius: 3px; height: 4px; margin-top: 8px; overflow: hidden; }
+  .tt-bar-fill { height: 100%; border-radius: 3px; }
+
+  /* ── 掲載期間 ── */
+  td.period-col { width: 140px; font-size: 11px; color: #666; }
+  .period-end { font-size: 10px; color: #aaa; }
+
+  /* ── ステータスアイコン ── */
+  .status-icon { flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px; }
+  .status-icon.active  { color: #28a745; }
+  .status-icon.paused  { color: #aaa; }
+  .status-icon.ended   { color: #bbb; }
+
+  /* ── 停止・終了行のグレーアウト ── */
+  tr.row-inactive td { opacity: 0.5; }
+  tr.row-inactive:hover td { opacity: 0.75; }
+
+  /* ── 凡例 ── */
+  .legend { display: flex; gap: 20px; align-items: center; padding: 8px 14px; background: #f9f9fb; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .legend-group { display: flex; gap: 14px; align-items: center; }
+  .legend-divider { width: 1px; height: 16px; background: #e0e0e0; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-bar { width: 16px; height: 5px; border-radius: 2px; flex-shrink: 0; }
+  .legend-title { font-size: 10px; color: #aaa; margin-right: 2px; }
+
+  /* ── 行ホバーアクション ── */
+  td.actions-col { width: 100px; }
+  .row-actions { opacity: 0; display: flex; align-items: center; gap: 4px; transition: opacity 0.15s; justify-content: flex-end; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  .action-btn { width: 28px; height: 28px; border: 1px solid #e0e0e0; background: #fff; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #666; transition: all 0.15s; position: relative; flex-shrink: 0; }
+  .action-btn:hover { background: #f0f4ff; border-color: #aac; color: #3366cc; }
+  .action-btn:hover .btn-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .action-btn.menu-btn:hover { background: #f5f5f5; border-color: #ccc; color: #333; }
+  .btn-tooltip { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(4px); background: #333; color: #fff; font-size: 10px; padding: 3px 7px; border-radius: 4px; white-space: nowrap; opacity: 0; transition: all 0.15s; pointer-events: none; z-index: 20; }
+  .btn-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #333; }
+
+  /* ── コンテキストメニュー（ドロップダウン） ── */
+  #ctx-menu { position: fixed; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 4px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.12); z-index: 600; display: none; min-width: 140px; }
+  .ctx-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; color: #333; cursor: pointer; transition: background 0.1s; white-space: nowrap; }
+  .ctx-item:hover { background: #f5f7ff; color: #1a1a2e; }
+  .ctx-item.danger { color: #dc3545; }
+  .ctx-item.danger:hover { background: #fff5f5; }
+  .ctx-divider { border: none; border-top: 1px solid #f0f0f0; margin: 3px 0; }
+
+  /* ── コマンドパレット ── */
+  .cmd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: flex-start; justify-content: center; padding-top: 100px; }
+  .cmd-overlay.open { display: flex; }
+  .cmd-palette { background: #fff; border-radius: 10px; width: 560px; max-height: 420px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+  .cmd-input-wrap { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #eee; gap: 10px; }
+  .cmd-input-wrap svg { color: #999; flex-shrink: 0; }
+  .cmd-input { border: none; outline: none; font-size: 15px; flex: 1; color: #333; }
+  .cmd-input::placeholder { color: #bbb; }
+  .cmd-results { overflow-y: auto; padding: 6px; }
+  .cmd-group-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px 4px; }
+  .cmd-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.1s; }
+  .cmd-item:hover, .cmd-item.selected { background: #f0f4ff; }
+  .cmd-item svg { color: #888; flex-shrink: 0; }
+  .cmd-item .cmd-label { font-size: 13px; color: #333; }
+  .cmd-item .cmd-shortcut { margin-left: auto; font-size: 11px; color: #bbb; background: #f0f0f0; border-radius: 3px; padding: 1px 6px; }
+  .cmd-footer { padding: 8px 16px; border-top: 1px solid #eee; display: flex; gap: 12px; font-size: 11px; color: #bbb; }
+  .cmd-footer kbd { background: #f0f0f0; border-radius: 3px; padding: 1px 5px; }
+
+  /* ── ショートカットヘルプ ── */
+  .shortcut-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+  .shortcut-overlay.open { display: flex; }
+  .shortcut-panel { background: #fff; border-radius: 10px; padding: 24px; width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .shortcut-panel h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
+  .shortcut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shortcut-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f5f5f5; }
+  .shortcut-row .desc { font-size: 12px; color: #555; }
+  .shortcut-row .keys { display: flex; gap: 3px; }
+  .shortcut-row kbd { background: #f0f0f0; border: 1px solid #ddd; border-radius: 3px; padding: 2px 6px; font-size: 11px; color: #555; font-family: monospace; }
+
+  /* ── フッター ── */
+  .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #f0f0f0; background: #fafafa; }
+  .pagination { display: flex; gap: 4px; }
+  .page-btn { width: 28px; height: 28px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 12px; color: #666; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .page-btn:hover { background: #f0f4ff; border-color: #aac; }
+  .page-btn.active { background: #dc3545; border-color: #dc3545; color: #fff; }
+  .bulk-actions { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #888; }
+
+  /* ── ツールチップ（グローバル） ── */
+  .phase1-badge { background: #e8f4fd; border: 1px solid #bee5fd; color: #0c6fbc; border-radius: 4px; padding: 2px 7px; font-size: 10px; margin-left: 6px; }
+
+  /* ── スライドインパネル ── */
+  .edit-panel-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 800; display: none; }
+  .edit-panel-backdrop.open { display: block; }
+  .edit-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 600px; max-width: 90vw; background: #fff; z-index: 801; box-shadow: -4px 0 40px rgba(0,0,0,0.18); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+  .edit-panel.open { transform: translateX(0); }
+
+  .ep-header { padding: 14px 18px; border-bottom: 1px solid #e8e8e8; display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; background: #fff; }
+  .ep-back { width: 28px; height: 28px; border: 1px solid #e0e0e0; background: #f8f8f8; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #666; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; }
+  .ep-back:hover { background: #f0f0f0; color: #333; }
+  .ep-header-info { flex: 1; min-width: 0; }
+  .ep-title { font-size: 15px; font-weight: 600; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ep-subtitle { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .ep-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #999; font-size: 18px; flex-shrink: 0; transition: color 0.15s; }
+  .ep-close:hover { color: #333; }
+
+  .ep-tabs { display: flex; border-bottom: 1px solid #e8e8e8; background: #fafafa; flex-shrink: 0; overflow-x: auto; }
+  .ep-tab { padding: 10px 16px; font-size: 12px; color: #888; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
+  .ep-tab:hover { color: #555; }
+  .ep-tab.active { color: #dc3545; border-bottom-color: #dc3545; font-weight: 500; background: #fff; }
+
+  .ep-body { flex: 1; overflow-y: auto; padding: 20px 22px; }
+  .ep-section { margin-bottom: 20px; }
+  .ep-section-title { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+  .ep-row { display: flex; gap: 14px; margin-bottom: 14px; }
+  .ep-field { flex: 1; min-width: 0; }
+  .ep-field.w-full { flex: 0 0 100%; }
+  .ep-label { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 5px; display: flex; align-items: center; gap: 4px; }
+  .ep-label .req { color: #dc3545; font-size: 10px; }
+  .ep-input { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 7px 10px; font-size: 13px; color: #333; outline: none; transition: border-color 0.15s; background: #fff; }
+  .ep-input:focus { border-color: #888; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
+  .ep-select { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 7px 10px; font-size: 13px; color: #333; outline: none; background: #fff; cursor: pointer; }
+  .ep-select:focus { border-color: #888; }
+  .ep-hint { font-size: 10px; color: #bbb; margin-top: 3px; }
+  .ep-radio-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+  .ep-radio { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #555; cursor: pointer; padding: 5px 10px; border: 1px solid #e0e0e0; border-radius: 5px; background: #fafafa; transition: all 0.15s; }
+  .ep-radio:hover { border-color: #bbb; background: #f0f0f0; }
+  .ep-radio input[type=radio] { accent-color: #dc3545; }
+  .ep-date-range { display: flex; align-items: center; gap: 8px; }
+  .ep-date-range span { color: #bbb; font-size: 12px; flex-shrink: 0; }
+
+  /* クリエイティブタブ — ミニテーブル */
+  .ep-mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ep-mini-table th { background: #f7f8fa; padding: 7px 10px; text-align: left; font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #e8e8e8; white-space: nowrap; }
+  .ep-mini-table td { padding: 8px 10px; border-bottom: 1px solid #f5f5f5; color: #555; vertical-align: middle; }
+  .ep-mini-table tr:last-child td { border-bottom: none; }
+  .ep-mini-table tr:hover td { background: #fafbff; }
+  .ep-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; background: #e8f0fe; color: #1a73e8; }
+  .ep-toggle { display: inline-flex; align-items: center; gap: 5px; }
+  .ep-toggle input[type=checkbox] { accent-color: #dc3545; width: 14px; height: 14px; }
+
+  /* タイムターゲティング */
+  .ep-time-grid { display: grid; grid-template-columns: 40px repeat(24, 1fr); gap: 2px; font-size: 9px; }
+  .ep-time-header { text-align: center; color: #bbb; padding: 1px; }
+  .ep-time-label { color: #888; font-size: 10px; display: flex; align-items: center; }
+  .ep-time-cell { height: 16px; border-radius: 2px; background: #eee; cursor: pointer; transition: background 0.1s; }
+  .ep-time-cell.active { background: #dc3545; }
+  .ep-time-cell:hover { background: #ffb3b3; }
+
+  .ep-footer { padding: 12px 18px; border-top: 1px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; background: #fafafa; flex-shrink: 0; }
+  .ep-footer-left { font-size: 11px; color: #bbb; }
+  .ep-footer-right { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="logo">CMer<span>TV</span>®</div>
+  <div class="notice">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    新しいお知らせがあります。
+  </div>
+  <div class="shortcut-hint">
+    <span class="kbd-hint" onclick="openCmd()" title="コマンドパレット">⌘K</span>
+    <span class="kbd-hint" onclick="openHelp()">? ヘルプ</span>
+  </div>
+  <div class="user">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    システム管理者
+  </div>
+</header>
+
+<div class="layout">
+  <!-- サイドバー -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" onclick="toggleSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </div>
+
+    <div class="sidebar-section">レポート</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="label">統計情報</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="label">カスタムレポート</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="label">アンケートレポート</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span class="label">レポートv2</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span class="label">支払通知</span>
+    </a>
+
+    <div class="sidebar-section">配信コントロール</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span class="label">予算管理</span>
+    </a>
+    <a class="sidebar-item active" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <span class="label">キャンペーン</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="label">クリエイティブ</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+      <span class="label">配信シナリオ</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="label">アンケート</span>
+    </a>
+
+    <div class="sidebar-section">アドネットワーク</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span class="label">AD NW管理</span>
+    </a>
+  </nav>
+
+  <!-- メイン -->
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="flag">⚑</span> キャンペーン管理
+        <span class="phase1-badge">Phase 1 改善中</span>
+      </h1>
+      <div class="page-actions">
+        <button class="btn btn-secondary" onclick="alert('インポート')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          インポート
+        </button>
+        <button class="btn btn-secondary" onclick="alert('エクスポート')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          エクスポート
+        </button>
+        <button class="btn btn-primary" onclick="alert('新規作成')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新規追加
+        </button>
+      </div>
+    </div>
+
+    <!-- 検索バー（Phase 1: インクリメンタルサーチ） -->
+    <div class="search-bar-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="globalSearch" type="text" placeholder="キャンペーン名・広告主で検索... (/ でフォーカス)" oninput="filterTable()" autocomplete="off">
+      <div class="search-meta">
+        <span class="filter-tag" onclick="alert('掲載期間フィルター')">📅 掲載期間 ▾</span>
+        <span class="filter-tag" onclick="alert('ステータスフィルター')">● ステータス ▾</span>
+      </div>
+      <span class="search-hint">⌘K でコマンドパレット</span>
+    </div>
+
+    <!-- タブ -->
+    <div class="tabs">
+      <div class="tab active" onclick="setTab(this)">すべて</div>
+      <div class="tab" onclick="setTab(this)">キャンペーン</div>
+      <div class="tab" onclick="setTab(this)">自社広告</div>
+    </div>
+
+    <!-- テーブルツールバー -->
+    <div class="table-toolbar">
+      <select onchange="alert('件数変更')">
+        <option>25件表示</option>
+        <option>50件表示</option>
+        <option>100件表示</option>
+      </select>
+      <div class="bulk-actions" id="bulkActions" style="display:none">
+        <span id="selectedCount">0件選択中</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">有効化</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">複製</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;color:#dc3545">停止</button>
+      </div>
+      <span class="result-count" id="resultCount">25件中 25件表示</span>
+    </div>
+
+    <!-- 凡例 -->
+    <div class="legend">
+      <span class="legend-title">ステータス</span>
+      <div class="legend-group">
+        <div class="legend-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#28a745" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          運用中
+        </div>
+        <div class="legend-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#aaa" stroke="none"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
+          停止中
+        </div>
+        <div class="legend-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>
+          終了
+        </div>
+      </div>
+      <div class="legend-divider"></div>
+      <span class="legend-title">配信ペース</span>
+      <div class="legend-group">
+        <div class="legend-item"><div class="legend-bar" style="background:#28a745"></div>順調（80%以上）</div>
+        <div class="legend-item"><div class="legend-bar" style="background:#ffc107"></div>遅め（80%未満）</div>
+        <div class="legend-item"><div class="legend-bar" style="background:#dc3545"></div>超過（100%超）</div>
+      </div>
+    </div>
+
+    <!-- テーブル -->
+    <div class="table-wrap">
+      <table id="campaignTable">
+        <thead>
+          <tr>
+            <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleAll(this)"></th>
+            <th style="width:56px">ID <span class="sort-icon">↕</span></th>
+            <th>キャンペーン <span class="sort-icon">↕</span></th>
+            <th style="width:180px">進捗 <span class="sort-icon">↕</span></th>
+            <th style="width:80px">CTR <span class="sort-icon">↕</span></th>
+            <th style="width:130px">掲載期間 <span class="sort-icon">↕</span></th>
+            <th style="width:110px"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+      <div class="table-footer">
+        <div class="bulk-actions">
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="alert('一括無効化')">一括無効化</button>
+        </div>
+        <div class="pagination">
+          <button class="page-btn">«</button>
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn">5</button>
+          <button class="page-btn">›</button>
+          <button class="page-btn">»</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- KPIホバートゥールチップ -->
+<div id="kpi-tooltip"></div>
+
+<!-- コンテキストメニュー -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-edit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>編集</div>
+  <div class="ctx-item" id="ctx-copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>コピーする</div>
+  <hr class="ctx-divider">
+  <div class="ctx-item" id="ctx-disable"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>無効にする</div>
+  <div class="ctx-item" id="ctx-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>新タグ発行</div>
+  <hr class="ctx-divider">
+  <div class="ctx-item danger" id="ctx-delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>削除</div>
+</div>
+
+<!-- コマンドパレット -->
+<div class="cmd-overlay" id="cmdOverlay" onclick="closeCmd(event)">
+  <div class="cmd-palette" onclick="event.stopPropagation()">
+    <div class="cmd-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="cmd-input" id="cmdInput" placeholder="ページ移動・操作を検索..." oninput="filterCmd()" onkeydown="cmdKeydown(event)" autocomplete="off">
+    </div>
+    <div class="cmd-results" id="cmdResults">
+    </div>
+    <div class="cmd-footer">
+      <span><kbd>↑↓</kbd> 移動</span>
+      <span><kbd>↵</kbd> 実行</span>
+      <span><kbd>Esc</kbd> 閉じる</span>
+    </div>
+  </div>
+</div>
+
+<!-- スライドインパネル バックドロップ -->
+<div class="edit-panel-backdrop" id="editBackdrop" onclick="closeEditPanel()"></div>
+
+<!-- スライドインパネル 本体 -->
+<div class="edit-panel" id="editPanel" role="dialog" aria-modal="true" aria-label="キャンペーン編集">
+  <div class="ep-header">
+    <button class="ep-back" onclick="closeEditPanel()" title="閉じる (Esc)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="ep-header-info">
+      <div class="ep-title" id="epTitle">キャンペーン編集</div>
+      <div class="ep-subtitle" id="epSubtitle">広告主名</div>
+    </div>
+    <button class="ep-close" onclick="closeEditPanel()" title="閉じる">×</button>
+  </div>
+
+  <div class="ep-tabs">
+    <div class="ep-tab active" data-tab="basic" onclick="setEditTab('basic')">基本情報</div>
+    <div class="ep-tab" data-tab="fq" onclick="setEditTab('fq')">FQ / リーセンシー</div>
+    <div class="ep-tab" data-tab="creative" onclick="setEditTab('creative')">クリエイティブ</div>
+    <div class="ep-tab" data-tab="targeting" onclick="setEditTab('targeting')">ターゲティング</div>
+    <div class="ep-tab" data-tab="delivery" onclick="setEditTab('delivery')">配信先設定</div>
+  </div>
+
+  <!-- 基本情報タブ -->
+  <div class="ep-body" id="epTab-basic">
+    <div class="ep-section">
+      <div class="ep-section-title">キャンペーン情報</div>
+      <div class="ep-row">
+        <div class="ep-field w-full">
+          <div class="ep-label">キャンペーン名 <span class="req">*</span></div>
+          <input class="ep-input" id="ep-name" type="text" placeholder="キャンペーン名を入力">
+        </div>
+      </div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">広告主 <span class="req">*</span></div>
+          <input class="ep-input" id="ep-advertiser" type="text" placeholder="広告主名">
+        </div>
+        <div class="ep-field">
+          <div class="ep-label">広告種別</div>
+          <select class="ep-select">
+            <option>Non Skippable</option>
+            <option>Skippable</option>
+            <option>バンパー</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">スキップ設定</div>
+      <div class="ep-field">
+        <div class="ep-label">スキップタイプ</div>
+        <div class="ep-radio-group">
+          <label class="ep-radio"><input type="radio" name="skip" value="none" checked> スキップなし</label>
+          <label class="ep-radio"><input type="radio" name="skip" value="5sec"> 5秒後スキップ可</label>
+          <label class="ep-radio"><input type="radio" name="skip" value="custom"> カスタム</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">掲載期間</div>
+      <div class="ep-field">
+        <div class="ep-label">配信期間 <span class="req">*</span></div>
+        <div class="ep-date-range">
+          <input class="ep-input" id="ep-start" type="date" style="flex:1">
+          <span>〜</span>
+          <input class="ep-input" id="ep-end" type="date" style="flex:1">
+        </div>
+        <div class="ep-hint">終了日は開始日より後に設定してください</div>
+      </div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">目標インプレッション</div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">トータル目標 imp</div>
+          <input class="ep-input" id="ep-impGoal" type="text" placeholder="例: 100,000">
+        </div>
+        <div class="ep-field">
+          <div class="ep-label">1日の目標 imp</div>
+          <input class="ep-input" id="ep-impDay" type="text" placeholder="例: 3,333">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FQ/リーセンシータブ -->
+  <div class="ep-body" id="epTab-fq" style="display:none">
+    <div class="ep-section">
+      <div class="ep-section-title">フリークエンシーキャップ</div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">上限回数</div>
+          <input class="ep-input" type="number" min="1" placeholder="例: 3">
+        </div>
+        <div class="ep-field">
+          <div class="ep-label">期間</div>
+          <select class="ep-select">
+            <option>なし</option>
+            <option>1日あたり</option>
+            <option>1週間あたり</option>
+            <option>合計</option>
+          </select>
+        </div>
+      </div>
+      <div class="ep-hint" style="margin-top:-6px;margin-bottom:14px">同一ユーザーへの広告表示回数を制限します</div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">リーセンシー制御</div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">最小間隔（分）</div>
+          <input class="ep-input" type="number" min="0" placeholder="例: 60">
+        </div>
+        <div class="ep-field">
+          <div class="ep-label">適用範囲</div>
+          <select class="ep-select">
+            <option>全キャンペーン共通</option>
+            <option>このキャンペーンのみ</option>
+          </select>
+        </div>
+      </div>
+      <div class="ep-hint" style="margin-top:-6px">同一ユーザーへの連続表示の最小間隔を設定します</div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">配信ペース</div>
+      <div class="ep-field">
+        <div class="ep-label">ペース設定</div>
+        <div class="ep-radio-group">
+          <label class="ep-radio"><input type="radio" name="pace" value="even" checked> 均等配信</label>
+          <label class="ep-radio"><input type="radio" name="pace" value="asap"> できるだけ早く</label>
+          <label class="ep-radio"><input type="radio" name="pace" value="custom"> カスタム</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- クリエイティブタブ -->
+  <div class="ep-body" id="epTab-creative" style="display:none">
+    <div class="ep-section">
+      <div class="ep-section-title">クリエイティブ設定</div>
+      <div style="overflow-x:auto; border: 1px solid #e8e8e8; border-radius: 6px;">
+        <table class="ep-mini-table">
+          <thead>
+            <tr>
+              <th>クリエイティブ</th>
+              <th>リンク</th>
+              <th>コンパニオン</th>
+              <th>オーバーレイ</th>
+              <th>比率</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="ep-badge">VIDEO_001</span></td>
+              <td><a href="#" onclick="return false" style="color:#1a73e8;font-size:11px;text-decoration:none">https://...</a></td>
+              <td><label class="ep-toggle"><input type="checkbox" checked> あり</label></td>
+              <td><label class="ep-toggle"><input type="checkbox"> あり</label></td>
+              <td>
+                <select class="ep-select" style="width:60px;padding:3px 5px;font-size:11px">
+                  <option>100%</option>
+                  <option>50%</option>
+                  <option>30%</option>
+                </select>
+              </td>
+              <td><button class="btn btn-ghost" style="padding:2px 8px;font-size:11px;color:#dc3545">削除</button></td>
+            </tr>
+            <tr>
+              <td><span class="ep-badge">VIDEO_002</span></td>
+              <td><a href="#" onclick="return false" style="color:#1a73e8;font-size:11px;text-decoration:none">https://...</a></td>
+              <td><label class="ep-toggle"><input type="checkbox"> あり</label></td>
+              <td><label class="ep-toggle"><input type="checkbox"> あり</label></td>
+              <td>
+                <select class="ep-select" style="width:60px;padding:3px 5px;font-size:11px">
+                  <option>100%</option>
+                  <option>50%</option>
+                  <option>30%</option>
+                </select>
+              </td>
+              <td><button class="btn btn-ghost" style="padding:2px 8px;font-size:11px;color:#dc3545">削除</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:10px;font-size:12px;padding:6px 12px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        クリエイティブを追加
+      </button>
+    </div>
+  </div>
+
+  <!-- ターゲティングタブ -->
+  <div class="ep-body" id="epTab-targeting" style="display:none">
+    <div class="ep-section">
+      <div class="ep-section-title">基本ターゲティング</div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">デバイス</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+            <label class="ep-radio"><input type="checkbox" checked> PC</label>
+            <label class="ep-radio"><input type="checkbox" checked> スマートフォン</label>
+            <label class="ep-radio"><input type="checkbox"> タブレット</label>
+          </div>
+        </div>
+      </div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">OS</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+            <label class="ep-radio"><input type="checkbox" checked> すべて</label>
+            <label class="ep-radio"><input type="checkbox"> iOS</label>
+            <label class="ep-radio"><input type="checkbox"> Android</label>
+            <label class="ep-radio"><input type="checkbox"> Windows</label>
+            <label class="ep-radio"><input type="checkbox"> macOS</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep-section">
+      <div class="ep-section-title">時間帯ターゲティング</div>
+      <div class="ep-field">
+        <div class="ep-label" style="margin-bottom:8px">配信時間帯（クリックでトグル）</div>
+        <div class="ep-time-grid" id="timeGrid"></div>
+        <div style="display:flex;gap:14px;margin-top:8px;font-size:10px;color:#999;align-items:center">
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:#dc3545;border-radius:2px"></div>配信あり</div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:#eee;border-radius:2px"></div>配信なし</div>
+          <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px;margin-left:auto" onclick="toggleAllTime(true)">全ON</button>
+          <button class="btn btn-ghost" style="padding:2px 8px;font-size:10px" onclick="toggleAllTime(false)">全OFF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 配信先設定タブ -->
+  <div class="ep-body" id="epTab-delivery" style="display:none">
+    <div class="ep-section">
+      <div class="ep-section-title">配信先メディア</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox" checked> 財経新聞</label>
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox" checked> ダイヤモンド・オンライン</label>
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox" checked> 東洋経済オンライン</label>
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox"> 日経クロステック</label>
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox"> ビジネスインサイダー</label>
+        <label class="ep-radio" style="justify-content:flex-start"><input type="checkbox"> Forbes Japan</label>
+      </div>
+    </div>
+    <div class="ep-section">
+      <div class="ep-section-title">配信形式</div>
+      <div class="ep-row">
+        <div class="ep-field">
+          <div class="ep-label">配信タイプ</div>
+          <select class="ep-select">
+            <option>インリード</option>
+            <option>PVN</option>
+            <option>アンカー</option>
+            <option>ワイド</option>
+            <option>L字</option>
+          </select>
+        </div>
+        <div class="ep-field">
+          <div class="ep-label">バイイング方式</div>
+          <select class="ep-select">
+            <option>ヘッダービディング(HB)</option>
+            <option>シナリオタグ</option>
+            <option>ダイレクト</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ep-footer">
+    <div class="ep-footer-left">最終更新: 2026/06/20 14:32</div>
+    <div class="ep-footer-right">
+      <button class="btn btn-secondary" onclick="closeEditPanel()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEditPanel()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        保存
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ショートカットヘルプ -->
+<div class="shortcut-overlay" id="shortcutOverlay" onclick="closeHelp()">
+  <div class="shortcut-panel" onclick="event.stopPropagation()">
+    <h3>⌨️ キーボードショートカット</h3>
+    <div class="shortcut-grid">
+      <div class="shortcut-row"><span class="desc">コマンドパレット</span><span class="keys"><kbd>⌘</kbd><kbd>K</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">新規作成</span><span class="keys"><kbd>N</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">検索にフォーカス</span><span class="keys"><kbd>/</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">選択行を編集</span><span class="keys"><kbd>E</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">選択行を複製</span><span class="keys"><kbd>D</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">行選択トグル</span><span class="keys"><kbd>Space</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">複数行選択</span><span class="keys"><kbd>Shift</kbd><kbd>↑↓</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">ヘルプ表示</span><span class="keys"><kbd>?</kbd></span></div>
+      <div class="shortcut-row"><span class="desc">閉じる</span><span class="keys"><kbd>Esc</kbd></span></div>
+    </div>
+    <div style="margin-top:16px;text-align:right"><button class="btn btn-secondary" onclick="closeHelp()">閉じる</button></div>
+  </div>
+</div>
+
+<script>
+const campaigns = [
+  { id: 38589, name: 'インリード_Sansan_2605【媒体指定(HB)】_PC', advertiser: 'Sansan_202605', type: 'Non Skippable', fq: 'D:2', status: 'active', progress: 86, impTotal: '246,082', impGoal: '285,714', impMonth: '246,082', impWeek: '58,200', impDay: '10,981', impDayGoal: '10,700', ctr: 0.07, ctrMonth: 0.07, ctrWeek: 0.05, ctrDay: 0.05, start: '2026/06/05', end: '2026/06/30' },
+  { id: 38588, name: 'PVN_Sansan_2605【財経新聞(シナリオタグ)】_SP', advertiser: 'Sansan_202605', type: 'Non Skippable', fq: 'None', status: 'active', progress: 98, impTotal: '49,155', impGoal: '50,000', impMonth: '49,155', impWeek: '12,300', impDay: '673', impDayGoal: '1,666', ctr: 0.55, ctrMonth: 0.55, ctrWeek: 0.44, ctrDay: 0.45, start: '2026/06/05', end: '2026/06/30' },
+  { id: 38587, name: 'PVN_Sansan_2605【ダイヤモンド・オンライン(シナリオタグ)】_SP', advertiser: 'Sansan_202605', type: 'Non Skippable', fq: 'None', status: 'active', progress: 71, impTotal: '42,860', impGoal: '60,000', impMonth: '42,860', impWeek: '10,100', impDay: '1,156', impDayGoal: '2,000', ctr: 0.58, ctrMonth: 0.58, ctrWeek: 0.55, ctrDay: 0.69, start: '2026/06/05', end: '2026/06/30' },
+  { id: 38586, name: 'PVN_Sansan_2605【東洋経済オンライン(HB)】_SP', advertiser: 'Sansan_202605', type: 'Non Skippable', fq: 'D:2', status: 'active', progress: 87, impTotal: '127,271', impGoal: '145,000', impMonth: '127,271', impWeek: '30,500', impDay: '5,728', impDayGoal: '5,400', ctr: 0.49, ctrMonth: 0.49, ctrWeek: 0.46, ctrDay: 0.37, start: '2026/06/05', end: '2026/06/30' },
+  { id: 38578, name: 'PVN_クレディセゾン_202606【HB×KW(消費行動系)】_SP', advertiser: 'クレディセゾン_202606', type: 'Non Skippable', fq: 'D:2', status: 'active', progress: 91, impTotal: '48,368', impGoal: '53,000', impMonth: '48,368', impWeek: '11,200', impDay: '2,100', impDayGoal: '1,900', ctr: 0.68, ctrMonth: 0.68, ctrWeek: 0.63, ctrDay: 0.37, start: '2026/06/01', end: '2026/06/30' },
+  { id: 38570, name: 'アンカー_大塚製薬_OS-1_202606_デモ', advertiser: '大塚製薬_202606', type: 'Non Skippable', fq: 'None', status: 'paused', progress: 45, impTotal: '12,200', impGoal: '27,000', impMonth: '12,200', impWeek: '3,800', impDay: '0', impDayGoal: '1,800', ctr: 0.31, ctrMonth: 0.31, ctrWeek: 0.28, ctrDay: 0.00, start: '2026/06/15', end: '2026/06/30' },
+  { id: 38560, name: 'ワイド_アサヒビール_トリプルゼロ_202606', advertiser: 'アサヒビール_202606', type: 'Non Skippable', fq: 'D:3', status: 'active', progress: 62, impTotal: '31,000', impGoal: '50,000', impMonth: '31,000', impWeek: '8,200', impDay: '1,640', impDayGoal: '1,666', ctr: 0.42, ctrMonth: 0.42, ctrWeek: 0.40, ctrDay: 0.38, start: '2026/06/10', end: '2026/06/30' },
+  { id: 38545, name: 'L字_グンゼ_アセドロン_202606_デモ', advertiser: 'グンゼ_202606', type: 'Non Skippable', fq: 'None', status: 'ended', progress: 100, impTotal: '20,000', impGoal: '20,000', impMonth: '20,000', impWeek: '0', impDay: '0', impDayGoal: '0', ctr: 0.18, ctrMonth: 0.18, ctrWeek: 0.00, ctrDay: 0.00, start: '2026/06/01', end: '2026/06/15' },
+];
+
+let filteredData = [...campaigns];
+let selectedIds = new Set();
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(c => {
+    const isInactive = c.status !== 'active';
+    const fillClass = isInactive ? 'inactive' : (c.progress >= 100 ? 'over' : c.progress >= 80 ? 'ok' : 'warn');
+    const statusIcon = c.status === 'active'
+      ? `<svg class="status-icon active" viewBox="0 0 24 24" fill="#28a745" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>`
+      : c.status === 'paused'
+      ? `<svg class="status-icon paused" viewBox="0 0 24 24" fill="#aaa" stroke="none"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>`
+      : `<svg class="status-icon ended" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>`;
+    return `
+    <tr class="${isInactive ? 'row-inactive' : ''}" onclick="selectRow(event, ${c.id})" data-id="${c.id}">
+      <td style="width:36px"><input type="checkbox" class="row-check" data-id="${c.id}" onchange="toggleRow(this)" onclick="event.stopPropagation()"></td>
+      <td class="id-col">${c.id}</td>
+      <td class="name-col">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          ${statusIcon}
+          <div style="min-width:0">
+            <div class="campaign-name" title="${c.name}">${c.name}</div>
+            <div class="campaign-sub">
+              <span>${c.advertiser}</span>
+              <span class="tag ns">${c.type}</span>
+              ${c.fq !== 'None' ? `<span class="tag">FQ ${c.fq}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </td>
+      <td class="progress-col" onmouseenter="showTooltip(event,'progress',${c.id})" onmouseleave="hideTooltip()">
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span class="progress-pct">${c.progress}%</span>
+            <span class="progress-imp-today">今日 ${c.impDay} imp</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill ${fillClass}" style="width:${Math.min(c.progress,100)}%"></div></div>
+          <div class="progress-hint">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            ホバーで内訳
+          </div>
+        </div>
+      </td>
+      <td class="ctr-col" onmouseenter="showTooltip(event,'ctr',${c.id})" onmouseleave="hideTooltip()">
+        <div class="ctr-value">${c.ctr.toFixed(2)}%</div>
+        <div class="ctr-hint">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          内訳
+        </div>
+      </td>
+      <td class="period-col">
+        <div>${c.start}〜</div>
+        <div class="period-end">${c.end}</div>
+      </td>
+      <td class="actions-col" onclick="event.stopPropagation()">
+        <div class="row-actions">
+          <button class="action-btn" onclick="event.stopPropagation();openEditPanel(${c.id})">
+            <span class="btn-tooltip">編集 (E)</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="action-btn" onclick="event.stopPropagation();alert('コピーする: ${c.name.replace(/'/g,"\\'")}')">
+            <span class="btn-tooltip">コピーする (D)</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="action-btn menu-btn" onclick="event.stopPropagation();openCtxMenu(event,${c.id})">
+            <span class="btn-tooltip">その他</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('resultCount').textContent = `${campaigns.length}件中 ${data.length}件表示`;
+}
+
+function filterTable() {
+  const q = document.getElementById('globalSearch').value.toLowerCase();
+  filteredData = q ? campaigns.filter(c => c.name.toLowerCase().includes(q) || c.advertiser.toLowerCase().includes(q)) : [...campaigns];
+  renderTable(filteredData);
+}
+
+function setTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('.row-check').forEach(c => { c.checked = cb.checked; });
+  selectedIds = cb.checked ? new Set(filteredData.map(c => c.id)) : new Set();
+  updateBulkActions();
+}
+
+function toggleRow(cb) {
+  const id = parseInt(cb.dataset.id);
+  cb.checked ? selectedIds.add(id) : selectedIds.delete(id);
+  updateBulkActions();
+}
+
+function selectRow(e, id) {
+  if (e.target.type === 'checkbox') return;
+  alert('キャンペーン詳細: ID ' + id);
+}
+
+function updateBulkActions() {
+  const n = selectedIds.size;
+  const el = document.getElementById('bulkActions');
+  el.style.display = n > 0 ? 'flex' : 'none';
+  document.getElementById('selectedCount').textContent = n + '件選択中';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── コンテキストメニュー ──
+const ctxMenu = document.getElementById('ctx-menu');
+let ctxCampaignId = null;
+
+function openCtxMenu(e, id) {
+  ctxCampaignId = id;
+  const rect = e.currentTarget.getBoundingClientRect();
+  let x = rect.right + 4;
+  let y = rect.top;
+  if (x + 160 > window.innerWidth) x = rect.left - 164;
+  if (y + 200 > window.innerHeight) y = rect.bottom - 200;
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top = y + 'px';
+  ctxMenu.style.display = 'block';
+  e.stopPropagation();
+}
+
+function closeCtxMenu() { ctxMenu.style.display = 'none'; ctxCampaignId = null; }
+
+document.getElementById('ctx-edit').onclick = () => { const id = ctxCampaignId; closeCtxMenu(); openEditPanel(id); };
+document.getElementById('ctx-copy').onclick = () => { const c = campaigns.find(x=>x.id===ctxCampaignId); alert('コピーする: ' + (c?.name||'')); closeCtxMenu(); };
+document.getElementById('ctx-disable').onclick = () => { const c = campaigns.find(x=>x.id===ctxCampaignId); if(confirm('無効にしますか？')) alert('無効にする: ' + (c?.name||'')); closeCtxMenu(); };
+document.getElementById('ctx-tag').onclick = () => { const c = campaigns.find(x=>x.id===ctxCampaignId); alert('新タグ発行: ' + (c?.name||'')); closeCtxMenu(); };
+document.getElementById('ctx-delete').onclick = () => { const c = campaigns.find(x=>x.id===ctxCampaignId); if(confirm('削除しますか？この操作は取り消せません。')) alert('削除: ' + (c?.name||'')); closeCtxMenu(); };
+
+document.addEventListener('click', e => { if (!ctxMenu.contains(e.target)) closeCtxMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCtxMenu(); });
+
+// ── ホバートゥールチップ ──
+const tooltip = document.getElementById('kpi-tooltip');
+let ttTimer = null;
+
+function showTooltip(e, type, id) {
+  clearTimeout(ttTimer);
+  const c = campaigns.find(x => x.id === id);
+  if (!c) return;
+
+  if (type === 'progress') {
+    const dayPct = c.impDayGoal !== '0' ? Math.round(parseInt(c.impDay.replace(/,/g,'')) / parseInt(c.impDayGoal.replace(/,/g,'')) * 100) : 0;
+    const dayColor = dayPct >= 90 ? '#28a745' : dayPct >= 60 ? '#ffc107' : '#dc3545';
+    const barColor = c.progress >= 100 ? '#dc3545' : c.progress >= 80 ? '#28a745' : '#ffc107';
+    tooltip.innerHTML = `
+      <div class="tt-header">進捗内訳</div>
+      <div class="tt-row"><span class="tt-label">Total</span><span class="tt-val">${c.impTotal} / ${c.impGoal} imp</span></div>
+      <hr class="tt-divider">
+      <div class="tt-row"><span class="tt-label">月計</span><span class="tt-val">${c.impMonth} imp</span></div>
+      <div class="tt-row"><span class="tt-label">週計</span><span class="tt-val">${c.impWeek} imp</span></div>
+      <div class="tt-row"><span class="tt-label">今日</span><span class="tt-val" style="color:${dayColor}">${c.impDay} imp <small style="color:#999;font-weight:400">(目標 ${c.impDayGoal})</small></span></div>
+      <div class="tt-bar-bg"><div class="tt-bar-fill" style="width:${Math.min(c.progress,100)}%;background:${barColor}"></div></div>`;
+  } else {
+    tooltip.innerHTML = `
+      <div class="tt-header">CTR内訳</div>
+      <div class="tt-row"><span class="tt-label">Total</span><span class="tt-val">${c.ctr.toFixed(2)}%</span></div>
+      <hr class="tt-divider">
+      <div class="tt-row"><span class="tt-label">Month</span><span class="tt-val">${c.ctrMonth.toFixed(2)}%</span></div>
+      <div class="tt-row"><span class="tt-label">Week</span><span class="tt-val">${c.ctrWeek.toFixed(2)}%</span></div>
+      <div class="tt-row"><span class="tt-label">Day</span><span class="tt-val ${c.ctrDay > c.ctr ? 'highlight' : ''}">${c.ctrDay.toFixed(2)}%</span></div>`;
+  }
+
+  positionTooltip(e);
+  tooltip.style.display = 'block';
+}
+
+function positionTooltip(e) {
+  const tw = tooltip.offsetWidth || 210;
+  const th = tooltip.offsetHeight || 140;
+  let x = e.clientX + 16;
+  let y = e.clientY - th / 2;
+  if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 8;
+  if (y < 8) y = 8;
+  if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+
+function hideTooltip() {
+  ttTimer = setTimeout(() => { tooltip.style.display = 'none'; }, 80);
+}
+
+document.addEventListener('mousemove', e => {
+  if (tooltip.style.display === 'block') positionTooltip(e);
+});
+
+// ── コマンドパレット ──
+const cmdItems = [
+  { icon: '🚩', label: 'キャンペーン管理', shortcut: '' },
+  { icon: '📊', label: '統計情報', shortcut: '' },
+  { icon: '📋', label: 'カスタムレポート', shortcut: '' },
+  { icon: '💰', label: '予算管理', shortcut: '' },
+  { icon: '🎨', label: 'クリエイティブ', shortcut: '' },
+  { icon: '➕', label: '新規キャンペーン作成', shortcut: 'N' },
+  { icon: '⬆', label: 'インポート', shortcut: '' },
+  { icon: '⬇', label: 'エクスポート', shortcut: '' },
+  { icon: '⌨', label: 'キーボードショートカット一覧', shortcut: '?' },
+];
+
+let cmdSelected = 0;
+
+function openCmd() {
+  document.getElementById('cmdOverlay').classList.add('open');
+  setTimeout(() => { document.getElementById('cmdInput').focus(); }, 50);
+  renderCmd(cmdItems);
+}
+
+function closeCmd(e) {
+  document.getElementById('cmdOverlay').classList.remove('open');
+}
+
+function renderCmd(items) {
+  document.getElementById('cmdResults').innerHTML = `
+    <div class="cmd-group-label">操作・ページ移動</div>
+    ${items.map((item, i) => `
+      <div class="cmd-item ${i === cmdSelected ? 'selected' : ''}" onclick="execCmd('${item.label}')">
+        <span style="font-size:15px">${item.icon}</span>
+        <span class="cmd-label">${item.label}</span>
+        ${item.shortcut ? `<span class="cmd-shortcut">${item.shortcut}</span>` : ''}
+      </div>
+    `).join('')}`;
+}
+
+function filterCmd() {
+  const q = document.getElementById('cmdInput').value.toLowerCase();
+  const filtered = q ? cmdItems.filter(i => i.label.toLowerCase().includes(q)) : cmdItems;
+  cmdSelected = 0;
+  document.getElementById('cmdResults').innerHTML = `
+    <div class="cmd-group-label">${q ? '検索結果' : '操作・ページ移動'}</div>
+    ${filtered.map((item, i) => `
+      <div class="cmd-item ${i === 0 ? 'selected' : ''}" onclick="execCmd('${item.label}')">
+        <span style="font-size:15px">${item.icon}</span>
+        <span class="cmd-label">${item.label}</span>
+        ${item.shortcut ? `<span class="cmd-shortcut">${item.shortcut}</span>` : ''}
+      </div>
+    `).join('')}`;
+}
+
+function cmdKeydown(e) {
+  if (e.key === 'Escape') closeCmd(e);
+  if (e.key === 'Enter') {
+    const selected = document.querySelector('.cmd-item.selected');
+    if (selected) { selected.click(); closeCmd(e); }
+  }
+}
+
+function execCmd(label) {
+  closeCmd({});
+  if (label === 'キーボードショートカット一覧') { openHelp(); return; }
+  alert(label + ' を実行');
+}
+
+function openHelp() {
+  document.getElementById('shortcutOverlay').classList.add('open');
+}
+function closeHelp() {
+  document.getElementById('shortcutOverlay').classList.remove('open');
+}
+
+// ── キーボードショートカット ──
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmd(); return; }
+  if (inInput) return;
+  if (e.key === '?') { openHelp(); return; }
+  if (e.key === '/') { e.preventDefault(); document.getElementById('globalSearch').focus(); return; }
+  if (e.key === 'n' || e.key === 'N') { alert('新規キャンペーン作成'); return; }
+  if (e.key === 'Escape') { closeCmd({}); closeHelp(); return; }
+});
+
+renderTable(campaigns);
+
+// ── スライドインパネル ──
+let currentEditId = null;
+let currentEditTab = 'basic';
+const EDIT_TABS = ['basic', 'fq', 'creative', 'targeting', 'delivery'];
+
+function openEditPanel(id) {
+  const c = campaigns.find(x => x.id === id);
+  if (!c) return;
+  currentEditId = id;
+
+  // ヘッダー情報を設定
+  document.getElementById('epTitle').textContent = c.name;
+  document.getElementById('epSubtitle').textContent = c.advertiser + '  /  ' + c.start + ' 〜 ' + c.end;
+
+  // 基本情報タブのフィールドを埋める
+  document.getElementById('ep-name').value = c.name;
+  document.getElementById('ep-advertiser').value = c.advertiser;
+  document.getElementById('ep-impGoal').value = c.impGoal;
+  document.getElementById('ep-impDay').value = c.impDayGoal;
+  // 日付をinput[type=date]形式に変換
+  const toISO = s => s.replace(/\//g, '-');
+  document.getElementById('ep-start').value = toISO(c.start);
+  document.getElementById('ep-end').value = toISO(c.end);
+
+  // 初期タブを基本情報に
+  setEditTab('basic');
+
+  // 時間帯グリッドを初期化
+  buildTimeGrid();
+
+  // パネルを開く
+  document.getElementById('editBackdrop').classList.add('open');
+  document.getElementById('editPanel').classList.add('open');
+  document.getElementById('ep-name').focus();
+}
+
+function closeEditPanel() {
+  document.getElementById('editBackdrop').classList.remove('open');
+  document.getElementById('editPanel').classList.remove('open');
+  currentEditId = null;
+}
+
+function saveEditPanel() {
+  alert('保存しました（モックアップ）');
+  closeEditPanel();
+}
+
+function setEditTab(tabKey) {
+  currentEditTab = tabKey;
+  // タブボタン
+  document.querySelectorAll('.ep-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tabKey);
+  });
+  // タブコンテンツ
+  EDIT_TABS.forEach(k => {
+    const el = document.getElementById('epTab-' + k);
+    if (el) el.style.display = k === tabKey ? '' : 'none';
+  });
+}
+
+// 時間帯グリッド生成
+const timeGrid = document.getElementById('timeGrid');
+let timeActive = {}; // "row-col" → bool
+
+function buildTimeGrid() {
+  if (!timeGrid) return;
+  const days = ['月', '火', '水', '木', '金', '土', '日'];
+  timeGrid.innerHTML = '';
+
+  // ヘッダー行（空 + 時刻）
+  const emptyH = document.createElement('div');
+  emptyH.className = 'ep-time-header';
+  timeGrid.appendChild(emptyH);
+  for (let h = 0; h < 24; h++) {
+    const cell = document.createElement('div');
+    cell.className = 'ep-time-header';
+    cell.textContent = h % 6 === 0 ? h : '';
+    timeGrid.appendChild(cell);
+  }
+
+  // 曜日行
+  days.forEach((day, r) => {
+    const label = document.createElement('div');
+    label.className = 'ep-time-label';
+    label.textContent = day;
+    timeGrid.appendChild(label);
+    for (let h = 0; h < 24; h++) {
+      const key = r + '-' + h;
+      const isActive = timeActive[key] !== false; // デフォルトON
+      const cell = document.createElement('div');
+      cell.className = 'ep-time-cell' + (isActive ? ' active' : '');
+      cell.onclick = () => {
+        timeActive[key] = !cell.classList.contains('active');
+        cell.classList.toggle('active');
+      };
+      timeGrid.appendChild(cell);
+    }
+  });
+}
+
+function toggleAllTime(on) {
+  document.querySelectorAll('.ep-time-cell').forEach(c => {
+    if (on) c.classList.add('active'); else c.classList.remove('active');
+  });
+  // timeActive を更新
+  const days = 7;
+  for (let r = 0; r < days; r++) {
+    for (let h = 0; h < 24; h++) {
+      timeActive[r + '-' + h] = on;
+    }
+  }
+}
+
+// Escキーでパネルを閉じる（既存のESCハンドラーを上書きしないよう追加）
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('editPanel').classList.contains('open')) {
+    closeEditPanel();
+  }
+  // E キーで最初の選択行を編集
+  const tag = document.activeElement.tagName;
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  if (!inInput && (e.key === 'e' || e.key === 'E') && selectedIds.size === 1) {
+    const id = [...selectedIds][0];
+    openEditPanel(id);
+  }
+});
+</script>
+</body>
+</html>
