@@ -156,16 +156,13 @@
   .legend-bar { width: 16px; height: 6px; border-radius: 2px; flex-shrink: 0; }
   .legend-title { font-size: 10px; color: #8a8c92; margin-right: 2px; }
 
-  /* ── 行ホバーアクション（Gmailスタイル オーバーレイ） ── */
-  td.actions-col { width: 0; padding: 0; border: none; overflow: visible; }
+  /* ── 行ホバーアクション（右端カラム） ── */
+  td.actions-col { width: 172px; padding: 4px 12px 4px 8px; text-align: right; }
   .row-actions {
-    position: absolute;
-    right: 285px; top: 0; bottom: 0;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 0 12px 0 72px;
-    background: linear-gradient(to right, transparent, #f8f9fa 42%);
+    justify-content: flex-end;
     opacity: 0;
     transition: opacity 0.15s;
     pointer-events: none;
@@ -653,7 +650,7 @@
             <th style="width:155px">進捗 <span class="sort-icon">↕</span></th>
             <th style="width:100px">CTR <span class="sort-icon">↕</span></th>
             <th style="width:185px">掲載期間 <span class="sort-icon">↕</span></th>
-            <th style="width:0;padding:0;border:none"></th>
+            <th style="width:172px"></th>
           </tr>
         </thead>
         <tbody id="tableBody">
