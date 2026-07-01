@@ -349,6 +349,28 @@
     transition: opacity 0.15s;
   }
   .maint-banner-close:hover { opacity: 1; }
+
+  /* ── サイドバー折りたたみ時ツールチップ ── */
+  .sidebar-item-tooltip {
+    position: fixed;
+    background: rgba(26,27,32,0.93);
+    color: #e8eaed;
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Roboto','Noto Sans JP',sans-serif;
+    white-space: nowrap;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+    transition: opacity 0.13s ease, transform 0.13s ease;
+  }
+  .sidebar-item-tooltip.show {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 </style>
 </head>
 <body>
@@ -1421,6 +1443,32 @@ function showMaintModal() {
 document.getElementById('maintModal').addEventListener('click', function(e) {
   if (e.target === this) this.style.display = 'none';
 });
+
+// サイドバー折りたたみ時ホバーツールチップ
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    const labelEl = item.querySelector('.label');
+    if (!labelEl) return;
+    let tip = null;
+
+    item.addEventListener('mouseenter', () => {
+      if (!sidebar.classList.contains('collapsed')) return;
+      const rect = item.getBoundingClientRect();
+      tip = document.createElement('div');
+      tip.className = 'sidebar-item-tooltip';
+      tip.textContent = labelEl.textContent.trim();
+      tip.style.left = (rect.right + 8) + 'px';
+      tip.style.top = (rect.top + rect.height / 2) + 'px';
+      document.body.appendChild(tip);
+      requestAnimationFrame(() => tip.classList.add('show'));
+    });
+
+    item.addEventListener('mouseleave', () => {
+      if (tip) { tip.remove(); tip = null; }
+    });
+  });
+})();
 </script>
 </body>
 </html>
