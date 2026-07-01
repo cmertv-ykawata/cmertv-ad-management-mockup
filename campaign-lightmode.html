@@ -156,10 +156,21 @@
   .legend-bar { width: 16px; height: 6px; border-radius: 2px; flex-shrink: 0; }
   .legend-title { font-size: 10px; color: #8a8c92; margin-right: 2px; }
 
-  /* ── 行ホバーアクション ── */
-  td.actions-col { width: 100px; }
-  .row-actions { opacity: 0; display: flex; align-items: center; gap: 4px; transition: opacity 0.15s; justify-content: flex-end; }
-  tbody tr:hover .row-actions { opacity: 1; }
+  /* ── 行ホバーアクション（Gmailスタイル オーバーレイ） ── */
+  td.actions-col { width: 0; padding: 0; border: none; overflow: visible; }
+  .row-actions {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px 0 56px;
+    background: linear-gradient(to right, transparent, #f8f9fa 38%);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  tbody tr:hover .row-actions { opacity: 1; pointer-events: auto; }
   .action-btn { width: 28px; height: 28px; border: 1px solid #d9dbe1; background: #f8f9fa; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8a8c92; transition: all 0.16s ease; position: relative; flex-shrink: 0; }
   .action-btn:hover { background: rgba(26,115,232,0.15); border-color: #1a73e8; color: #1a73e8; }
   .action-btn:hover .btn-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
