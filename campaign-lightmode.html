@@ -38,8 +38,10 @@
   .sidebar-item:hover { background: rgba(255,255,255,0.04); color: #1a1b20; }
   .sidebar-item.active { background: rgba(26,115,232,0.18); color: #1a73e8; border-left-color: #1a73e8; }
   .sidebar-item svg { flex-shrink: 0; width: 16px; height: 16px; }
-  .sidebar-item .label { font-size: 12px; overflow: hidden; transition: opacity 0.2s; }
+  .sidebar-item .label { font-size: 12px; overflow: hidden; transition: opacity 0.2s; flex: 1; }
+  .sidebar-badge { background: #f4b400; color: #1a1b20; border-radius: 10px; padding: 1px 6px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
   .sidebar.collapsed .label { opacity: 0; width: 0; }
+  .sidebar.collapsed .sidebar-badge { opacity: 0; }
   .sidebar.collapsed .sidebar-section { opacity: 0; }
 
   /* ── メインコンテンツ ── */
@@ -464,6 +466,62 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       <span class="label">AD NW管理</span>
     </a>
+
+    <div class="sidebar-section">RTB (SSP)</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <span class="label">メディアパッケージ</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+      <span class="label">オークション設定</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="label">広告主ドメイン制御</span>
+    </a>
+
+    <div class="sidebar-section">設定</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+      <span class="label">広告主</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="label">アカウント</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span class="label">配信事業者</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span class="label">サイト</span>
+      <span class="sidebar-badge">40</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      <span class="label">サイトカテゴリ</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+      <span class="label">掲載可否</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8"/><path d="M12 3v4"/></svg>
+      <span class="label">代理店</span>
+    </a>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+      <span class="label">ターゲティング</span>
+    </a>
+
+    <div class="sidebar-section">マニュアル</div>
+    <a class="sidebar-item" href="#" onclick="return false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span class="label">マニュアル</span>
+    </a>
+
     <div class="sidebar-version">v3.0.0 (a1b2c3d)</div>
   </nav>
 
