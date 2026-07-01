@@ -134,8 +134,8 @@
   .tt-bar-fill { height: 100%; border-radius: 3px; }
 
   /* ── 掲載期間 ── */
-  td.period-col { width: 118px; font-size: 11px; color: #5f6368; }
-  .period-end { font-size: 10px; color: #8a8c92; }
+  td.period-col { width: 152px; font-size: 11px; color: #5f6368; white-space: nowrap; }
+  .period-end { font-size: 11px; color: #5f6368; }
 
   /* ── ステータスアイコン ── */
   .status-icon { flex-shrink: 0; margin-top: 2px; width: 14px; height: 14px; }
@@ -652,7 +652,7 @@
             <th>キャンペーン <span class="sort-icon">↕</span></th>
             <th style="width:155px">進捗 <span class="sort-icon">↕</span></th>
             <th style="width:76px">CTR <span class="sort-icon">↕</span></th>
-            <th style="width:118px">掲載期間 <span class="sort-icon">↕</span></th>
+            <th style="width:152px">掲載期間 <span class="sort-icon">↕</span></th>
             <th style="width:0;padding:0;border:none"></th>
           </tr>
         </thead>
@@ -1088,10 +1088,7 @@ function renderTable(data) {
           内訳
         </div>
       </td>
-      <td class="period-col">
-        <div>${c.start}〜</div>
-        <div class="period-end">${c.end}</div>
-      </td>
+      <td class="period-col">${c.start}〜${c.end}</td>
       <td class="actions-col" onclick="event.stopPropagation()">
         <div class="row-actions">
           <button class="action-btn" onclick="event.stopPropagation();openEditPanel(${c.id})">
